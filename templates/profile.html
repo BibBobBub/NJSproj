@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="title">
+  Welcome, {{ name }}!
+</h1>
+<p>
+  <h2>Here you can left smth for tracking</h2>
+  <form method="POST" action="/tracker_send">
+            <div class="field">
+                <div class="tracker">
+                    <input class="input is-large" type="text" name="tracker" placeholder="Your Req" autofocus="">
+                </div>
+            </div>
+  </form>
+
+{% endblock %}

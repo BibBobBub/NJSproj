@@ -1,73 +1,30 @@
-import requests
-import urllib
-import pandas as pd
-from requests_html import HTML
-from requests_html import HTMLSession
-from sqlalchemy import create_engine
+from flask import Blueprint, render_template, request
+from flask_login import login_required, current_user
+from .crawler import main_function
+from . import db
 
-def get_source(url):
-    try:
-        session = HTMLSession()
-        response = session.get(url)
-        return response
+main = Blueprint('main', __name__)
 
-    except requests.exceptions.RequestException as e:
-        print(e)
+@main.route('/')
+def index():
+    return render_template('index.html')
 
-def scrape_google(query):
+@main.route('/profile')
+@login_required
+def profile():
+    return render_template('profile.html', name=current_user.name)
 
-    query = urllib.parse.quote_plus(query)
-    response = get_source("https://www.google.co.uk/search?q=" + query)
+@main.route('/tracker_send', methods=['POST'])
+@login_required
+def tracker_send():
+    tracker = str(request.form.get('tracker'))
+    print(tracker)
+    main_function(tracker, current_user.id)
+    #db.session.
+    print(Research_1.query.filter_by(id=1))
+    return render_template('tracker.html', name=current_user.name)
 
-    links = list(response.html.absolute_links)
-    google_domains = ('https://www.google.', 
-                      'https://google.', 
-                      'https://webcache.googleusercontent.', 
-                      'http://webcache.googleusercontent.', 
-                      'https://policies.google.',
-                      'https://support.google.',
-                      'https://maps.google.')
-
-    for url in links[:]:
-        if url.startswith(google_domains):
-            links.remove(url)
-
-    return links
-def get_results(query):
-    
-    query = urllib.parse.quote_plus(query)
-    response = get_source("https://www.google.co.uk/search?q=" + query)
-    
-    return response
-
-def parse_results(response):
-    df = pd.DataFrame()
-    css_identifier_result = ".tF2Cxc"
-    css_identifier_title = "h3"
-    css_identifier_link = ".yuRUbf a"
-    css_identifier_text = ".VwiC3b"
-    
-    results = response.html.find(css_identifier_result)
-
-    output_title = []
-    output_link = []
-    output_link_text = []
-    for result in results:
-        output_title.append(result.find(css_identifier_title, first=True).text)
-        output_link.append(result.find(css_identifier_link, first=True).attrs['href'])
-        output_link_text.append(result.find(css_identifier_text, first=True).text)
-
-    df['title']=output_title
-    df['link']=output_link
-    df['link_text']=output_link_text
-
-    engine = create_engine('mysql+pymysql://root:12@localhost:3306/NJS', echo = False)
-    df.to_sql(name = 'my_table_new_index', con = engine, if_exists = 'append', index = True) 
-    
-    return df
-
-def google_search(query):
-    response = get_results(query)
-    return parse_results(response)
-
-results = google_search("Test")
+@main.route('/tracker')
+@login_required
+def tracker():
+    return render_template('tracker.html', name=current_user.name, )
